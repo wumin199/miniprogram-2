@@ -1,0 +1,15 @@
+{
+  "name": "identifyfood",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^1.6.0" 
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,42 @@
+<view style="text-align: right; padding: 10px 20px; background-color: #f8f8f8;">
+  <view bindtap="goToSettings" style="display: inline-block; color: #67c23a; font-size: 13px; padding: 6px 14px; border: 1px solid #67c23a; border-radius: 20px; background: #fff;">
+    ⚙️ 调整目标与运动
+  </view>
+</view>
+
+<view style="padding: 0 20px 20px 20px; background-color: #f8f8f8; min-height: 95vh;">
+  <view style="background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+    <view style="display: flex; justify-content: space-between;">
+      <view>
+        <view style="font-size: 13px; color: #999;">今日余量 (kcal)</view>
+        <view style="font-size: 32px; font-weight: bold; color: #ff9800;">{{ remCal }}</view>
+      </view>
+      <view style="text-align: right;">
+        <view style="font-size: 11px; color: #999;">已摄入：{{ breakfastCal }}</view>
+        <view style="font-size: 11px; color: #999;">动态预算：{{ totalBudget }}</view>
+      </view>
+    </view>
+    <view style="width: 100%; height: 6px; background: #eee; border-radius: 3px; margin-top: 15px; overflow: hidden;">
+      <view style="width: {{ progressWidth }}; height: 100%; background: #ff9800; transition: width 0.5s;"></view>
+    </view>
+    <button bindtap="onCameraTap" style="margin-top: 20px; background: #ff9800; color: #fff; border-radius: 25px; font-size: 14px; font-weight: bold; border: none; box-shadow: 0 4px 8px rgba(255,152,0,0.3);">
+      📸 拍照识餐 (筷子标尺比对)
+    </button>
+  </view>
+
+  <view style="background: #fff; padding: 25px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+    <view style="color: #666; font-size: 13px;">距离目标 {{ targetWeight }}kg 还有</view>
+    <view style="color: #f56c6c; font-size: 42px; font-weight: bold; margin: 10px 0;">
+      {{ diffWeight > 0 ? diffWeight : 0 }} <text style="font-size: 16px;">kg</text>
+    </view>
+    <view style="color: #999; font-size: 12px;">当前：{{ lastWeight }} kg</view>
+  </view>
+
+  <view style="margin-top: 25px;">
+    <input style="background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 10px; text-align: center;" 
+           type="digit" placeholder="记录今日体重 (kg)" bindinput="getWeight" />
+    <button type="primary" style="width: 100%; border-radius: 25px; background: #67c23a;" bindtap="saveWeight">
+      同步数据
+    </button>
+  </view>
+</view>

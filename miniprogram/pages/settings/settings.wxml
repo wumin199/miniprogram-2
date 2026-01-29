@@ -1,0 +1,20 @@
+<view style="padding: 20px; background-color: #f8f8f8; min-height: 100vh;">
+  <view style="background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+    <view style="font-weight: bold; margin-bottom: 20px;">身体参数</view>
+    <picker bindchange="bindGenderChange" value="{{genderIndex}}" range="{{genders}}">
+      <view style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">性别：{{genders[genderIndex]}}</view>
+    </picker>
+    <input style="margin-bottom: 15px; border-bottom: 1px solid #eee;" type="number" placeholder="年龄" bindinput="inputAge" value="{{age}}" />
+    <input style="margin-bottom: 15px; border-bottom: 1px solid #eee;" type="number" placeholder="身高(cm)" bindinput="inputHeight" value="{{height}}" />
+    <input style="margin-bottom: 15px; border-bottom: 1px solid #eee;" type="digit" placeholder="当前体重(kg)" bindinput="inputCurrentWeight" value="{{currentWeight}}" />
+    <input style="margin-bottom: 15px; border-bottom: 1px solid #eee;" type="digit" placeholder="目标体重(kg)" bindinput="inputTargetWeight" value="{{targetWeight}}" />
+    <input style="margin-bottom: 15px; border-bottom: 1px solid #eee; color: #409eff;" type="number" placeholder="今日运动消耗(kcal)" bindinput="inputExercise" value="{{exercise}}" />
+
+    <view style="margin-top: 15px; padding: 15px; background: #f0f9eb; border-radius: 10px;">
+      <view style="font-size: 12px; color: #67c23a;">基础代谢 (BMR): {{bmr}} kcal</view>
+      <view style="font-size: 16px; font-weight: bold; color: #67c23a; margin-top: 5px;">今日动态预算：{{finalBudget}} kcal</view>
+      <view style="font-size: 10px; color: #999; margin-top: 10px;">公式：BMR + 运动消耗 - 500(减重缺口)</view>
+    </view>
+  </view>
+  <button type="primary" bindtap="saveSettings" style="margin-top: 30px; background: #67c23a; border-radius: 25px;">更新档案</button>
+</view>
