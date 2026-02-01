@@ -42,7 +42,7 @@ Page({
   },
 
   uploadAndIdentify(path) {
-    wx.showLoading({ title: '微信 AI 识别中...' });
+    wx.showLoading({ title: '百度 AI 识别中...' });
     const cloudPath = `food/${Date.now()}.jpg`;
     
     wx.cloud.uploadFile({
@@ -52,29 +52,91 @@ Page({
         wx.cloud.callFunction({
           name: 'identifyfood',
           data: { fileID: res.fileID },
+          timeout: 20000,
           success: resCloud => {
             wx.hideLoading();
-            // 微信接口返回的数组名是 dish_num_list
+            console.log('云函数返回结果：', resCloud);
+            
+            if (resCloud.result && resCloud.result.error) {
+              console.error('云函数内部错误：', resCloud.result);
+              this.handleManualEntry(`识别失败：${resCloud.result.errMsg || resCloud.result.error}`);
+              return;
+            }
+            
             const list = resCloud.result.dish_num_list || [];
+            console.log('识别到的菜品列表:', list);
             
             if (list.length > 0) {
               const topItem = list[0];
-              this.setData({
-                tempFoodName: topItem.name,
-                tempCalPer100g: topItem.calorie || 120 
-              });
-              this.startDimensionSelect();
+              
+              if (topItem.name === '请手动输入') {
+                this.handleManualEntry("AI 服务暂不可用，请手动输入菜名");
+                return;
+              }
+              
+              // 如果有多个结果，让用户选择
+              if (list.length > 1) {
+                this.showDishSelection(list);
+              } else {
+                // 只有一个结果，直接使用
+                this.setData({
+                  tempFoodName: topItem.name,
+                  tempCalPer100g: topItem.calorie || 120 
+                });
+                this.startDimensionSelect();
+              }
             } else {
-              this.handleManualEntry("微信 AI 没认出来，请手动输入菜名");
+              this.handleManualEntry("AI 没认出来，请手动输入菜名");
             }
           },
           fail: (err) => {
             wx.hideLoading();
-            this.handleManualEntry("云函数连接失败，请手动输入");
+            console.error('云函数调用失败：', err);
+            this.handleManualEntry(`云函数连接失败(${err.errMsg || 'unknown'})，请手动输入`);
           }
         })
+      },
+      fail: (err) => {
+        wx.hideLoading();
+        console.error('图片上传失败：', err);
+        wx.showToast({ 
+          title: `上传失败：${err.errMsg || 'unknown'}`, 
+          icon: 'none',
+          duration: 2000
+        });
       }
     })
+  },
+
+  // 显示多个识别结果供用户选择
+  showDishSelection(dishList) {
+    const itemList = dishList.map(item => 
+      `${item.name} (${item.probability}% 匹配, ${item.calorie}卡/100g)`
+    );
+    itemList.push('都不对，手动输入');
+
+    wx.showActionSheet({
+      itemList: itemList,
+      success: (res) => {
+        const tapIndex = res.tapIndex;
+        if (tapIndex < dishList.length) {
+          // 用户选择了某个菜品
+          const selectedDish = dishList[tapIndex];
+          this.setData({
+            tempFoodName: selectedDish.name,
+            tempCalPer100g: selectedDish.calorie || 120
+          });
+          this.startDimensionSelect();
+        } else {
+          // 用户选择了"手动输入"
+          this.handleManualEntry("请输入正确的菜名");
+        }
+      },
+      fail: () => {
+        // 用户取消，进入手动输入
+        this.handleManualEntry("请输入菜名");
+      }
+    });
   },
 
   handleManualEntry(msg) {

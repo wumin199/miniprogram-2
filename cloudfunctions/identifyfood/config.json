@@ -3,5 +3,8 @@
     "openapi": [
       "img.dish"
     ]
-  }
+  },
+  "timeout": 20,
+  "envVariables": {},
+  "vpc": {}
 }

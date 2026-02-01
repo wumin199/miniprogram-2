@@ -87,7 +87,16 @@ Page({
       },
       success: () => {
         wx.showToast({ title: '档案已更新' });
-        setTimeout(() => { wx.navigateBack(); }, 1000);
+        setTimeout(() => { 
+          // 修复路由错误：使用 switchTab 而不是 navigateBack
+          wx.switchTab({ 
+            url: '/pages/index/index',
+            fail: () => {
+              // 如果不是 tabBar 页面，使用 reLaunch
+              wx.reLaunch({ url: '/pages/index/index' });
+            }
+          }); 
+        }, 1000);
       }
     })
   }
