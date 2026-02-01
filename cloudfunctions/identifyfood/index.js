@@ -35,7 +35,8 @@ async function getBaiduAccessToken() {
     return cachedToken
   } catch (err) {
     console.error('获取百度access_token失败:', err)
-    throw new Error('获取百度token失败')
+    const errMsg = err?.message || err?.errMsg || '未知错误'
+    throw new Error(`获取百度token失败: ${errMsg}`)
   }
 }
 
@@ -44,21 +45,34 @@ async function recognizeDish(imageBase64) {
   const accessToken = await getBaiduAccessToken()
   
   try {
+    // 构建请求参数
+    const params = new URLSearchParams({
+      image: imageBase64,
+      top_num: '5',           // 返回前5个结果
+      filter_threshold: '0.05' // 降低置信度阈值到5%，获取更多候选
+    })
+    
+    console.log('请求参数:', { top_num: 5, filter_threshold: 0.05 })
+    
     const response = await axios.post(
       `https://aip.baidubce.com/rest/2.0/image-classify/v2/dish?access_token=${accessToken}`,
-      `image=${encodeURIComponent(imageBase64)}&top_num=5`,
+      params.toString(),
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
-        }
+        },
+        timeout: 15000
       }
     )
 
     console.log('百度API返回:', JSON.stringify(response.data))
     return response.data
   } catch (err) {
-    console.error('百度菜品识别失败:', err.response?.data || err.message)
-    throw err
+    console.error('百度菜品识别失败:', err.response?.data || err?.message || err)
+    const errMsg = err?.response?.data?.error_msg || err?.message || '识别接口异常'
+    const newErr = new Error(errMsg)
+    newErr.code = err?.response?.status || err?.code || -1
+    throw newErr
   }
 }
 
@@ -81,19 +95,27 @@ exports.main = async (event, context) => {
     console.log('调用百度菜品识别API...')
     const baiduResult = await recognizeDish(imageBase64)
 
-    // 4. 转换百度返回格式为微信格式（保持前端兼容）
+    // 4. 转换百度返回格式并优化结果
     if (baiduResult.result && baiduResult.result.length > 0) {
-      const dishList = baiduResult.result.map(item => ({
+      // 过滤低置信度结果（降低门槛到0.3，显示更多结果）
+      const filteredResults = baiduResult.result.filter(item => 
+        item.probability > 0.3
+      )
+      
+      const dishList = filteredResults.map(item => ({
         name: item.name,
-        calorie: item.calorie || 130,  // 百度API返回卡路里
-        probability: item.probability   // 置信度
+        calorie: Math.round(item.calorie || 130),  // 四舍五入卡路里
+        probability: Math.round(item.probability * 100)  // 转换为百分比
       }))
 
-      console.log('识别成功，菜品数量:', dishList.length)
+      console.log('识别成功，过滤后菜品数量:', dishList.length)
+      console.log('原始结果数量:', baiduResult.result.length)
+      console.log('菜品列表:', JSON.stringify(dishList))
       
       return {
         dish_num_list: dishList,
-        result_num: dishList.length
+        result_num: dishList.length,
+        original_count: baiduResult.result.length  // 原始识别数量
       }
     } else {
       console.log('未识别到菜品')
@@ -105,12 +127,16 @@ exports.main = async (event, context) => {
   } catch (err) {
     console.error('云函数执行错误:', err)
     
+    // 安全地提取错误信息
+    const errorMessage = err?.message || err?.errMsg || err?.error || '未知错误'
+    const errorCode = err?.code || err?.errCode || -1
+    
     // 返回友好的错误信息
     return { 
       dish_num_list: [],
-      error: err.message || '未知错误', 
-      errMsg: `识别失败: ${err.message || 'unknown'}`,
-      errCode: err.code || -1
+      error: errorMessage, 
+      errMsg: `识别失败: ${errorMessage}`,
+      errCode: errorCode
     }
   }
 }

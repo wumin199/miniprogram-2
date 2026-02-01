@@ -74,16 +74,30 @@ Page({
                 return;
               }
               
-              // 如果有多个结果，让用户选择
-              if (list.length > 1) {
-                this.showDishSelection(list);
-              } else {
-                // 只有一个结果，直接使用
-                this.setData({
-                  tempFoodName: topItem.name,
-                  tempCalPer100g: topItem.calorie || 120 
+              // 如果只有1个结果且置信度<75%，提示可能不准确
+              if (list.length === 1 && topItem.probability < 75) {
+                wx.showModal({
+                  title: `识别结果：${topItem.name}`,
+                  content: `置信度较低(${topItem.probability}%)，识别可能不准确。\n\n建议核对或手动输入菜名。`,
+                  confirmText: '就是它',
+                  cancelText: '重新输入',
+                  success: (res) => {
+                    if (res.confirm) {
+                      // 用户确认使用识别结果
+                      this.setData({
+                        tempFoodName: topItem.name,
+                        tempCalPer100g: topItem.calorie || 120
+                      });
+                      this.startDimensionSelect();
+                    } else {
+                      // 用户选择手动输入
+                      this.handleManualEntry(`AI识别为"${topItem.name}"，请输入正确菜名`);
+                    }
+                  }
                 });
-                this.startDimensionSelect();
+              } else {
+                // 多个结果或高置信度，显示选择菜单
+                this.showDishSelection(list);
               }
             } else {
               this.handleManualEntry("AI 没认出来，请手动输入菜名");
